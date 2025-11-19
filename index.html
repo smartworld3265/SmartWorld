@@ -386,7 +386,7 @@ footer.sw-footer {
 }
 
 
-/* ===== Ajuste fijo para el botón AGREGAR A CARRITO (mantener tamaño al reordenar) ===== */
+/* ===== Ajuste fijo para el botón CARRITO (mantener tamaño al reordenar) ===== */
 .add-btn.add-to-cart {
   padding: 8px 10px;
   min-width: 120px;   /* ancho mínimo estable */
@@ -766,7 +766,7 @@ function renderProducts(list){
   <button class="add-btn add-to-cart"
           data-id="${p.id}"
           aria-label="Agregar ${escapeHtml(p.name)}">
-    AGREGAR A CARRITO
+    CARRITO
   </button>
 
 </div>
@@ -971,7 +971,7 @@ document.addEventListener('click', (e) => {
       } else {
         // modal add button feedback (not shown in UI)
         t.textContent = 'AGREGADO';
-        setTimeout(()=> t.textContent = 'AGREGAR A CARRITO', 700);
+        setTimeout(()=> t.textContent = 'CARRITO', 700);
       }
     }
     return;
