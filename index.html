@@ -358,10 +358,15 @@ header {
 /* ===== FOOTER SMARTWORLD (limpio + profesional) ===== */
 
 footer.sw-footer {
-  background: #fff;
-  padding: 50px 20px;
-  border-top: 1px solid #eee;
-  font-family: Inter, Arial, sans-serif;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 50px 20px;
+    transform: none;
+    box-sizing: border-box;
+    background: #fff;
+    border-top: 1px solid #eee;
+    font-family: Inter, Arial, sans-serif;
 }
 
 .sw-footer-container {
@@ -472,6 +477,33 @@ header {
     gap: 10px;
   }
 }
+
+
+
+@media (max-width: 860px) {
+  #page-payment .payment-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+
+@media (max-width: 860px) {
+  footer.sw-footer {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}
+
+
+
+@media (max-width: 980px) {
+  #page-payment .payment-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 
 </style>
 
@@ -655,7 +687,7 @@ header {
         <div class="muted">Método de pago</div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 420px;gap:18px">
+      <div class="payment-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:18px;">
         <!-- Left: receipt -->
         <div class="receipt" id="receiptBox">
           <strong>Comprobante</strong>
