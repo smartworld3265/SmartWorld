@@ -1,4 +1,4 @@
-<!doctype html>
+Total a pagar<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
@@ -21,7 +21,7 @@
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--black);background:#f7f7f8}
-  .wrap{max-width:var(--container);margin:20px auto;padding:18px}
+  .wrap{max-width:var(--container);margin:0 auto;padding:18px}
   /* Header */
   header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 6px;background:linear-gradient(180deg,#fff,#fff);border-radius:14px}
   .brand{display:flex;align-items:center;gap:14px}
@@ -322,10 +322,7 @@ header {
   border-radius: 14px; /* opcional: evita redondeo si se ve raro */
 }
 
-/* Separación para evitar que el header fijo tape el contenido */
-.wrap {
-  margin-top: 70px;
-}
+
 
 
 
@@ -370,9 +367,10 @@ footer.sw-footer {
 }
 
 .sw-footer-container {
-  max-width: 900px;
-  margin: auto;
-  text-align: center; /* CENTRAR TODO */
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .sw-footer p,
@@ -503,6 +501,62 @@ header {
     grid-template-columns: 1fr !important;
   }
 }
+
+
+.payment-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+
+
+.payment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+
+footer.sw-footer {
+  padding-top: 40px;
+  margin-top: 40px;
+}
+
+
+
+footer.sw-footer {
+  background: #ffffff;
+  padding: 20px 10px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  margin-top: 40px;        /* separación del contenido superior */
+  width: 100%;
+}
+
+
+
+#page-catalog {
+  margin-top: calc(var(--header-height) + -50px);
+}
+
+
+
+
+
+#page-checkout, #page-payment {
+  margin-top: calc(var(--header-height) + -60px) !important;
+}
+
+
+
+
+   #productsGrid {
+     max-width: 1200px;
+     margin: 0 auto;
+     display: grid;
+   }
+
 
 
 </style>
@@ -651,8 +705,8 @@ header {
             <div class="muted" style="font-size:13px">Recibe tu producto en un promedio de 12 días</div>
           </div>
           <div style="text-align:right">
-            <div class="muted">Total a pagar</div>
-            <div id="checkoutTotal" style="font-weight:900;font-size:18px">$0.00</div>
+            <div class="muted" style="font-size: 13px;">Total a pagar</div>
+            <div id="checkoutTotal" style="font-weight:900;font-size:12px">$0.00</div>
           </div>
         </div>
 
@@ -679,76 +733,122 @@ header {
     </div>
   </section>
 
-  <!-- Payment page -->
-  <section id="page-payment" class="page" aria-label="Pago">
-    <div style="max-width:1100px;margin:12px auto">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <h2 style="margin:0">Información de pago</h2>
-        <div class="muted">Método de pago</div>
+ 
+<!-- Payment page -->
+<section id="page-payment" class="page" aria-label="Pago">
+  <div style="max-width:1100px;margin:12px auto">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h2 style="margin:0">Información de pago</h2>
+      <div class="muted">Método de pago</div>
+    </div>
+
+    <div class="payment-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:18px;">
+      
+      <!-- Left: receipt -->
+      <div class="receipt" id="receiptBox">
+        <strong>Comprobante</strong>
+        <div id="receiptClient" style="margin-top:10px;color:var(--muted);font-size:14px"></div>
+        <div id="receiptItems" style="margin-top:12px"></div>
+
+        <div style="margin-top:12px" class="muted">
+          <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span id="rec-sub">$0.00</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Envío</span><span id="rec-ship">$6.00</span></div>
+          <hr>
+          <div style="display:flex;justify-content:space-between;font-weight:900"><span>Total</span><span id="rec-total">$0.00</span></div>
+        </div>
       </div>
 
-      <div class="payment-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:18px;">
-        <!-- Left: receipt -->
-        <div class="receipt" id="receiptBox">
-          <strong>Comprobante</strong>
-          <div id="receiptClient" style="margin-top:10px;color:var(--muted);font-size:14px"></div>
-          <div id="receiptItems" style="margin-top:12px"></div>
-          <div style="margin-top:12px" class="muted">
-            <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span id="rec-sub">$0.00</span></div>
-            <div style="display:flex;justify-content:space-between"><span>Envío</span><span id="rec-ship">$6.00</span></div>
-            <hr>
-            <div style="display:flex;justify-content:space-between;font-weight:900"><span>Total</span><span id="rec-total">$0.00</span></div>
+      <!-- Right: payment form -->
+      <div style="background:#fff;padding:16px;border-radius:12px;box-shadow:var(--shadow)">
+        <form id="paymentForm" novalidate>
+
+          <!-- GRID DE AJUSTE AUTOMÁTICO -->
+          <div class="payment-fields" 
+               style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+
+            <!-- Número de tarjeta -->
+            <div class="field" style="position:relative;">
+              <label for="cardnum">* Número de tarjeta</label>
+              <input id="cardnum" inputmode="numeric" maxlength="16"
+                     placeholder="0000 0000 0000 0000" required
+                     style="padding-right:50px;" />
+
+              <!-- Logo dinámico -->
+              <img id="cardLogo" src="" alt=""
+                   style="position:absolute; right:3px; top:25px; width:50px; height:35px; 
+                          display:none; border:2px solid #ccc; border-radius:8px">
+              <div class="error" id="err-cardnum">Campo requerido.</div>
+            </div>
+
+            <!-- Titular -->
+            <div class="field">
+              <label for="titular">* Titular (Primer Nombre y Primer Apellido)</label>
+              <input id="titular" placeholder="Nombre Apellido" required />
+              <div class="error" id="err-titular">Campo requerido.</div>
+            </div>
+
+            <!-- Mes -->
+            <div class="field">
+              <label for="expMM">* Mes (MM)</label>
+              <input id="expMM" maxlength="2" placeholder="MM" required />
+              <div class="error" id="err-mm">MM inválido</div>
+            </div>
+
+            <!-- Año -->
+            <div class="field">
+              <label for="expYYYY">* Año (YYYY)</label>
+              <input id="expYYYY" maxlength="4" placeholder="YYYY" required />
+              <div class="error" id="err-yyyy">Año inválido</div>
+            </div>
+
+            <!-- CVV -->
+            <div class="field">
+              <label for="cvv">* CVV</label>
+              <input id="cvv" maxlength="3" placeholder="000" required />
+              <div class="error" id="err-cvv">CVV inválido</div>
+            </div>
+
+          </div><!-- end payment-fields grid -->
+
+
+          <!-- Botones y gráfica -->
+          <div style="text-align:center; margin-top:20px; width:100%">
+            <div style="display:flex; justify-content:center; gap:12px;">
+              <button id="sendPayment" type="button" class="add-btn"
+                style="background:var(--accent); color:white; border:none; padding:10px 20px;
+                       border-radius:10px; min-width:160px; font-weight:600;">
+                ENVIAR PAGO
+              </button>
+
+              <button id="backToCheckout" type="button" class="add-btn"
+                style="background:#fff; border:1px solid #eee; color:var(--accent);
+                       padding:10px 20px; border-radius:10px; min-width:160px; font-weight:600;">
+                Volver
+              </button>
+            </div>
+
+            <div style="margin-top:20px;">
+              <img src="TARJET00.jpg" alt="Decoración pago"
+                   style="width:100%; max-width:600px; height:auto;
+                          border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.08);">
+            </div>
+
+            <div class="success" id="paidMsg" 
+                 style="margin-top:12px; display:none;">
+              ✅ PAGO REALIZADO EXITOSAMENTE
+            </div>
+
           </div>
-        </div>
 
-        <!-- Right: payment form -->
-        <div style="background:#fff;padding:16px;border-radius:12px;box-shadow:var(--shadow)">
-          <form id="paymentForm" novalidate>
-
-
-
-<div class="field" style="position:relative;">
-  <label for="cardnum">* Número de tarjeta</label>
-  
-  <input id="cardnum" inputmode="numeric" maxlength="16"
-         placeholder="0000 0000 0000 0000" required
-         style="padding-right:50px;" />
-
-  <!-- Logo dinámico -->
-  <img id="cardLogo" src="" alt="" 
-       style="position:absolute; right:3px; top:25px; width:50px; height:35px; display:none; border:2px solid #ccc; border-radius:8px">
-
-  <div class="error" id="err-cardnum">Campo requerido.</div>
-</div>
-
-
-            <div class="field"><label for="titular">* Titular (Primer Nombre y Primer Apellido)</label><input id="titular" placeholder="Nombre Apellido" required/><div class="error" id="err-titular">Campo requerido.</div></div>
-            <div style="display:flex;gap:8px">
-              <div class="field" style="flex:1"><label for="expMM">* Mes (MM)</label><input id="expMM" maxlength="2" placeholder="MM" required/><div class="error" id="err-mm">MM inválido</div></div>
-              <div class="field" style="flex:1"><label for="expYYYY">* Año (YYYY)</label><input id="expYYYY" maxlength="4" placeholder="YYYY" required/><div class="error" id="err-yyyy">Año inválido</div></div>
-            </div>
-            <div class="field"><label for="cvv">* CVV</label><input id="cvv" maxlength="3" placeholder="000" required/><div class="error" id="err-cvv">CVV inválido</div></div>
-
-            <div style="display:flex;gap:8px;margin-top:8px">
-              <div style="text-align:center; margin-top:20px; width:100%">
-                <div style="display:flex; justify-content:center; gap:12px;">
-                  <button id="sendPayment" type="button" class="add-btn" style="background:var(--accent); color:white; border:none; padding:10px 20px; border-radius:10px; min-width:160px; font-weight:600;">ENVIAR PAGO</button>
-                  <button id="backToCheckout" type="button" class="add-btn" style="background:#fff; border:1px solid #eee; color:var(--accent); padding:10px 20px; border-radius:10px; min-width:160px; font-weight:600;">Volver</button>
-                </div>
-                <div style="margin-top:20px;">
-                  <img src="TARJET00.jpg" alt="Decoración pago" style="width:100%; max-width:600px; height:auto; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.08);">
-                </div>
-                <div class="success" id="paidMsg" style="margin-top:12px; display:none;">✅ PAGO REALIZADO EXITOSAMENTE</div>
-              </div>
-            </div>
-
-          </form>
-        </div>
+        </form>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-</div>
+
+
 
 <!-- Modal producto -->
 <div id="modalProduct" class="modal" aria-hidden="true">
@@ -1615,14 +1715,11 @@ document.querySelectorAll('.price-original, .price-final').forEach(el => {
 
 
 
-
-
 <footer class="sw-footer">
 
   <div class="sw-footer-container">
 
     <!-- Bloque 1 -->
- 
     <div class="sw-social">
       <a href="#"><svg><use href="#icon-instagram"></use></svg></a>
       <a href="#"><svg><use href="#icon-facebook"></use></svg></a>
@@ -1633,7 +1730,6 @@ document.querySelectorAll('.price-original, .price-final').forEach(el => {
     <h4>Contacto</h4>
     <div>
       Ubicados en Florida – EE.UU. – 2902 NW 72 ave Miami FL 33122<br>
-      
       Store: +1 (786) 426-4120 <br>
       WhatsApp: +1 (786) 658-078 <br>
       WhatsApp: +1 (786) 398-1589 <br><br>
@@ -1679,9 +1775,54 @@ document.querySelectorAll('.price-original, .price-final').forEach(el => {
 
 
 
+<script>
+function updateHeaderHeight() {
+  const h = document.querySelector("header");
+  if (!h) return;
+  const height = h.offsetHeight;
+  document.documentElement.style.setProperty("--header-height", height + "px");
+}
+
+window.addEventListener("load", updateHeaderHeight);
+window.addEventListener("resize", updateHeaderHeight);
+new ResizeObserver(updateHeaderHeight).observe(document.querySelector("header"));
+</script>
 
 
 
+<script>
+function ajustarSeparacionCatalogo() {
+    const header = document.querySelector("header");
+    const catalog = document.getElementById("page-catalog");
+    if (!header || !catalog) return;
+
+    const h = header.offsetHeight;
+    document.documentElement.style.setProperty("--header-height", (h + 10) + "px");
+}
+
+window.addEventListener("load", ajustarSeparacionCatalogo);
+window.addEventListener("resize", ajustarSeparacionCatalogo);
+const obs = new ResizeObserver(ajustarSeparacionCatalogo);
+obs.observe(document.querySelector("header"));
+</script>
+
+<script>
+function updateHeaderHeight() {
+  const h = document.querySelector("header");
+  if (!h) return;
+  const height = h.offsetHeight;
+  document.documentElement.style.setProperty("--header-height", height + "px");
+}
+
+// Ejecutar al cargar
+window.addEventListener("load", updateHeaderHeight);
+
+// Ejecutar al cambiar tamaño o si el header hace wrap
+window.addEventListener("resize", updateHeaderHeight);
+
+// Prevenir efectos al cambiar elementos dinámicos
+new ResizeObserver(updateHeaderHeight).observe(document.querySelector("header"));
+</script>
 
 
 </body>
