@@ -77,8 +77,52 @@
 
   .add-btn:active{transform:scale(.98)}
   /* cart panel */
-  .cart-panel{position:fixed;right:18px;top:90px;width:380px;max-height:78vh;background:var(--card);border-radius:14px;padding:14px;box-shadow:0 30px 80px rgba(11,20,40,0.18);overflow:auto;display:none;z-index:200;transform:translateY(10px);transition:opacity .18s ease, transform .18s ease}
-  .cart-panel.open{display:block;opacity:1;transform:translateY(0)}
+
+/* === CARRITO A PANTALLA COMPLETA (tipo modal) === */
+
+/* === CARRITO A PANTALLA COMPLETA REAL === */
+.cart-panel{
+  position:fixed;
+  inset:0;               /* 🔥 Esto equaliza left=0, top=0, right=0, bottom=0 */
+  width:100vw;           /* 🔥 Garantiza ancho TOTAL incluso en móviles */
+  height:100vh;          /* 🔥 Alto total */
+  background:rgba(0,0,0,0.55);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:2000;
+  padding:0;
+  border-radius:0;
+}
+
+/* === CAJA INTERNA (contenedor) === */
+.cart-panel .cart-box{
+  width:100%;
+  max-width:620px;
+  max-height:90vh;
+  height:auto;
+  background:white;
+  overflow-y:auto;
+  border-radius:0;
+  padding:20px;
+}
+
+/* === RESPONSIVE  (MÓVILES) === */
+@media (max-width:768px){
+  .cart-panel .cart-box{
+    max-width:100%;
+    max-height:100vh;
+    height:100vh;
+    border-radius:0;
+    padding:18px;
+  }
+}
+
+
+/* abrir */
+.cart-panel.open {
+  display: flex;
+}
   .cart-item{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f2f2f3}
   .qty-controls{display:flex;gap:6px;align-items:center}
   .totals{margin-top:12px}
@@ -99,7 +143,7 @@
   /* responsive */
   @media (max-width:980px){
     .layout{grid-template-columns:1fr}
-    .cart-panel{left:10px;right:10px;top:auto;bottom:18px}
+    /* .cart-panel{left:10px;right:10px;top:auto;bottom:18px} */
   }
 
 .envio-gratis {
@@ -400,6 +444,35 @@ footer.sw-footer {
 }
 
 
+@media (max-width: 768px) {
+  .top-search {
+    width: 100% !important;
+  }
+
+  .top-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+}
+
+
+/* Permitir que el header haga salto de línea */
+header {
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+
+/* Para que el bloque Buscar + Carrito se acomode bien al bajar */
+@media (max-width: 680px) {
+  nav.controls {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+}
+
 </style>
 
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -457,7 +530,7 @@ footer.sw-footer {
   <div class="layout" aria-live="polite">
     <!-- Catalog -->
     <main class="catalog" id="page-catalog" role="region" aria-label="Catálogo">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding:6px 0;gap:10px;">
         <div>
           <strong style="font-size:18px">Catálogo tecnológico</strong>
           <div class="muted" style="font-size:13px">Aprovecha un 30% de descuento y disfruta de envío gratuito a nivel mundial 🚚</div>
@@ -506,26 +579,34 @@ footer.sw-footer {
   </div>
 
   <!-- Cart panel -->
-  <aside id="cartPanel" class="cart-panel" role="dialog" aria-label="Carrito">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <strong>Tu carrito</strong>
-      <div style="display:flex;gap:8px">
-        <button id="closeCart" class="add-btn" style="background:#fff;color:var(--accent);border:1px solid #ffd0b8">Cerrar</button>
-      </div>
-    </div>
-    <div id="cartItems" style="margin-top:12px"></div>
+<aside id="cartPanel" class="cart-panel" role="dialog" aria-label="Carrito">
 
-    <div class="totals">
-      <div class="line"><div class="muted">Subtotal</div><div id="subtotalText">$0.00</div></div>
-      <div class="line"><div class="muted">Envío</div><div id="shippingText">$6.00</div></div>
-      <div class="line" style="font-weight:900;font-size:16px"><div>Total</div><div id="totalText">$0.00</div></div>
-    </div>
+    <!-- NUEVA CAJA CENTRADA DEL MODAL -->
+    <div class="cart-box">
 
-    <div class="checkout-cta">
-      <button id="panelCheckout" class="add-btn" style="flex:1;background:var(--accent)">COMPRAR AHORA</button>
-      <button id="panelClear" class="add-btn" style="background:#fff;border:1px solid #eee;color:var(--accent)">Vaciar</button>
-    </div>
-  </aside>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+            <strong>Tu carrito</strong>
+            <div style="display:flex;gap:8px">
+                <button id="closeCart" class="add-btn" style="background:#fff;color:var(--accent);border:1px solid #ffd0b8">Cerrar</button>
+            </div>
+        </div>
+
+        <div id="cartItems" style="margin-top:12px"></div>
+
+        <div class="totals">
+            <div class="line"><div class="muted">Subtotal</div><div id="subtotalText">$0.00</div></div>
+            <div class="line"><div class="muted">Envío</div><div id="shippingText">$6.00</div></div>
+            <div class="line" style="font-weight:900;font-size:16px"><div>Total</div><div id="totalText">$0.00</div></div>
+        </div>
+
+        <div class="checkout-cta">
+            <button id="panelCheckout" class="add-btn" style="flex:1;background:var(--accent)">COMPRAR AHORA</button>
+            <button id="panelClear" class="add-btn" style="background:#fff;border:1px solid #eee;color:var(--accent)">Vaciar</button>
+        </div>
+
+    </div> <!-- Cierra .cart-box -->
+
+</aside>
 
   <!-- Checkout page -->
   <section id="page-checkout" class="page" aria-label="Checkout">
