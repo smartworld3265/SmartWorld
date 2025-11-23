@@ -889,11 +889,178 @@ const CHECKOUT_KEY = 'sw_checkout_v1';
 function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 function escapeHtml(s){ return (s+'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 // Reemplaza la función existente por esta:
+
+/* ---------- START: Localization & Currency conversion (injected) ---------- */
+/*
+ Strategy:
+  - Detect user's locale (navigator.language) and try IP geolocation (ipapi.co) to get country.
+  - Map country -> currency (common list). Fallback USD.
+  - Fetch exchange rates from exchangerate.host (free) to convert from USD to local currency.
+  - Provide convertUSD(amount) to convert numeric USD -> local numeric.
+  - Replace product price display to use converted values.
+  - formatMoney() will use DETECT_LANG and DETECT_CURRENCY already set.
+ Note: the code degrades gracefully if network calls fail (uses navigator.language and USD).
+*/
+window.__SW_LOCALIZATION__ = {
+  fetchedRates: null,
+  currencyMap: {
+    "US":"USD","GB":"GBP","DE":"EUR","FR":"EUR","ES":"EUR","IT":"EUR","NL":"EUR",
+    "BE":"EUR","PT":"EUR","IE":"EUR","MX":"MXN","AR":"ARS","CL":"CLP","CO":"COP",
+    "PE":"PEN","VE":"VES","EC":"USD","UY":"UYU","PY":"PYG","BO":"BOB","BR":"BRL",
+    "CA":"CAD","AU":"AUD","NZ":"NZD","JP":"JPY","CN":"CNY","KR":"KRW","IN":"INR",
+    "SA":"SAR","AE":"AED","TR":"TRY","RU":"RUB","CH":"CHF","SE":"SEK","NO":"NOK",
+    "DK":"DKK","PL":"PLN","CZ":"CZK","HU":"HUF","ZA":"ZAR","NG":"NGN"
+  }
+};
+
+async function detectLocaleAndCurrency(){
+  // default
+  const navLang = (navigator.language || navigator.userLanguage || 'en-US');
+  let lang = navLang;
+  let country = null;
+
+  // Try IP geolocation to get precise country code
+  try {
+    const resp = await fetch('https://ipapi.co/json/');
+    if(resp && resp.ok){
+      const data = await resp.json();
+      if(data && data.country){
+        country = data.country;
+        // ipapi may provide languages
+        if(data.languages) lang = data.languages.split(',')[0] || lang;
+      }
+    }
+  } catch(e){
+    // ignore - fallback to navigator.language
+  }
+
+  // fallback: derive country from language (e.g. es-ES -> ES)
+  if(!country){
+    const parts = lang.split('-');
+    if(parts.length>1) country = parts[1].toUpperCase();
+  }
+
+  // final fallback
+  if(!country) country = 'US';
+
+  const currency = window.__SW_LOCALIZATION__.currencyMap[country] || (new Intl.NumberFormat(lang).resolvedOptions().currency) || 'USD';
+
+  window.DETECT_LANG = lang;
+  window.DETECT_CURRENCY = currency;
+  window.DETECT_COUNTRY = country;
+
+  return { lang, currency, country };
+}
+
+async function fetchExchangeRatesIfNeeded(){
+  // If USD => same, no fetch required, but still set fetchedRates with rate 1
+  const to = window.DETECT_CURRENCY || 'USD';
+  if(to === 'USD'){
+    window.__SW_LOCALIZATION__.fetchedRates = { base: 'USD', rates: { USD: 1 } };
+    return window.__SW_LOCALIZATION__.fetchedRates;
+  }
+
+  // Check sessionStorage cache (valid for 12 hours)
+  try {
+    const cache = JSON.parse(sessionStorage.getItem('sw_fx_rates_v1') || 'null');
+    const now = Date.now();
+    if(cache && cache.timestamp && (now - cache.timestamp) < (12*60*60*1000) && cache.rates && cache.base === 'USD'){
+      window.__SW_LOCALIZATION__.fetchedRates = cache;
+      return cache;
+    }
+  } catch(e){}
+
+  // Fetch from exchangerate.host (no api key required)
+  try {
+    const symbols = encodeURIComponent(to);
+    const url = `https://api.exchangerate.host/latest?base=USD&symbols=${symbols}`;
+    const resp = await fetch(url);
+    if(resp && resp.ok){
+      const data = await resp.json();
+      if(data && data.rates){
+        const obj = { base: data.base || 'USD', rates: data.rates, fetchedAt: data.date || null, timestamp: Date.now() };
+        sessionStorage.setItem('sw_fx_rates_v1', JSON.stringify(obj));
+        window.__SW_LOCALIZATION__.fetchedRates = obj;
+        return obj;
+      }
+    }
+  } catch(e){
+    // ignore
+  }
+
+  // Last fallback: identity
+  window.__SW_LOCALIZATION__.fetchedRates = { base: 'USD', rates: { [to]: 1 } };
+  return window.__SW_LOCALIZATION__.fetchedRates;
+}
+
+function convertUSD(amountUSD){
+  // amountUSD is number in USD
+  try {
+    const rates = window.__SW_LOCALIZATION__.fetchedRates;
+    const to = window.DETECT_CURRENCY || 'USD';
+    if(!rates || !rates.rates) return amountUSD;
+    const rate = rates.rates[to] || 1;
+    return +(amountUSD * rate);
+  } catch(e){
+    return amountUSD;
+  }
+}
+
+// Override/replace formatMoney used across the app to format local-currency numbers.
+// Note: The rest of the app MUST pass amounts already converted (numbers in local currency).
 function formatMoney(v){
+  // If v looks like a string with currency symbol, attempt to parse number (best-effort)
+  let num = (typeof v === 'number') ? v : Number(String(v).replace(/[^0-9\-,.]/g,'').replace(',','.')) || 0;
   const lang = window.DETECT_LANG || navigator.language || 'en-US';
   const curr = window.DETECT_CURRENCY || 'USD';
-  return new Intl.NumberFormat(lang, { style: 'currency', currency: curr }).format(v);
+  return new Intl.NumberFormat(lang, { style: 'currency', currency: curr }).format(num);
 }
+
+/* Helper: walk DOM and replace currency-like texts if any (basic) */
+function replaceInlineCurrencyTexts(){
+  // Replace fixed $... strings in static HTML (e.g. shipping $6.00 displayed as text nodes)
+  // Find elements that contain $ and digits and replace with localized currency
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+  const nodesToUpdate = [];
+  while(walker.nextNode()){
+    const txt = walker.currentNode.nodeValue;
+    if(txt && /\$\s*\d/.test(txt)){
+      nodesToUpdate.push(walker.currentNode);
+    }
+  }
+  nodesToUpdate.forEach(node=>{
+    const txt = node.nodeValue;
+    const newTxt = txt.replace(/\$\s*([0-9,]+(?:\.[0-9]+)?)/g, (m, g1)=>{
+      const n = Number(g1.replace(/,/g,''));
+      return formatMoney(convertUSD(n));
+    });
+    if(newTxt !== txt) node.nodeValue = newTxt;
+  });
+}
+
+/* Initialize localization and run product re-render to convert prices */
+(async function initLocalization(){
+  try {
+    await detectLocaleAndCurrency();
+    await fetchExchangeRatesIfNeeded();
+  } catch(e){}
+  // After rates available, re-render product grid and cart totals if functions exist
+  try {
+    if(typeof window.renderProducts === 'function' && typeof window.products !== 'undefined'){
+      // Update product price fields: create temporary mapped prices in products._localPrice
+      window.products.forEach(p => {
+        p._price_local = +(convertUSD(p.price).toFixed(2));
+        p._final_local = +((p._price_local * 0.7).toFixed(2));
+      });
+      // Re-render using the existing renderProducts but we will make renderProducts prefer _price_local if present.
+      window.renderProducts(window.products);
+    }
+  } catch(e){}
+  // Replace static texts like shipping shown as $6.00
+  replaceInlineCurrencyTexts();
+})();
+/* ---------- END: Localization & Currency conversion (injected) ---------- */
+
 
 /* ---------- Products (with real-photo sources) ---------- */
 const brands = ['OneTech','NexCell','Futura','Zento','Skyline','Orbis','Kairo','Volt','Astra'];
@@ -968,7 +1135,8 @@ document.getElementById('productCount').textContent = products.length;
 function renderProducts(list){
   grid.innerHTML = '';
   for(const p of list){
-    const final = +(p.price * 0.7).toFixed(2);
+    const final = +( (p._final_local !== undefined) ? p._final_local : +(p.price * 0.7).toFixed(2) );
+    const priceToShow = (p._price_local !== undefined) ? p._price_local : p.price;
     const div = document.createElement('div');
     div.className = 'prod';
 
@@ -1001,7 +1169,7 @@ function renderProducts(list){
 
 <div class="price-row">
   <div>
-    <div class="price-original">${formatMoney(p.price)}</div>
+    <div class="price-original">${formatMoney(priceToShow)}</div>
     <div class="price-final">${formatMoney(final)}</div>
   </div>
 
@@ -1825,5 +1993,24 @@ new ResizeObserver(updateHeaderHeight).observe(document.querySelector("header"))
 </script>
 
 
+<script>
+
+// After DOM ready, convert and update static shipping & totals displayed in DOM
+document.addEventListener('DOMContentLoaded', function(){
+  try {
+    const shipEls = document.querySelectorAll('#shippingText, #rec-ship');
+    shipEls.forEach(el=>{
+      const shipUSD = typeof SHIPPING !== 'undefined' ? SHIPPING : 6.00;
+      const local = (window.__SW_LOCALIZATION__ && window.__SW_LOCALIZATION__.fetchedRates) ? convertUSD(shipUSD) : shipUSD;
+      el.textContent = formatMoney(local);
+    });
+    // Update totals / checkoutTotal, subtotalText, totalText if functions available
+    if(typeof window.renderCartPanel === 'function') renderCartPanel();
+    if(typeof window.updateCheckoutTotals === 'function') updateCheckoutTotals();
+    if(typeof window.populateReceipt === 'function') populateReceipt();
+  } catch(e){}
+});
+
+</script>
 </body>
 </html>
